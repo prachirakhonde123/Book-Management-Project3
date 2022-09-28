@@ -39,7 +39,7 @@ let uploadFile = async (file) => {
             if (err) {
                 return reject({ error: err })
             }
-            console.log(data)
+            //console.log(data)
             console.log("file uploaded sucessfully")
             return resolve(data.Location)
         })
@@ -51,6 +51,7 @@ let uploadFile = async (file) => {
 router.post('/aws-file-uploading', async function (req, res) {
     try {
         let files = req.files
+        console.log(typeof files)
         if (files && files.length > 0) {
             let uploadedFileURL = await uploadFile(files[0])
             res.status(201).send({ msg: "file uploaded sucessfully", data: uploadedFileURL })
