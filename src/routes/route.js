@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { createUser, userLogin } = require("../controllers/userController")
-const { createBooks, getBooks, getBookById, updateBooks, deleteBooks } = require("../controllers/booksController")
+const { createBooks, getBooks, getBookById, updateBooks, deleteBooks, addBooks } = require("../controllers/booksController")
 const { createReview,updateReview,deleteReview } = require('../controllers/reviewController')
-const { authentication, authorisation } = require("../middleware/auth");
+const { authentication, authorisation, uploadFile} = require("../middleware/auth");
 
 
 //========================= user apis ========================================================
@@ -18,6 +18,10 @@ router.get("/books", authentication, getBooks)
 router.get("/books/:bookId", authentication, getBookById)
 router.put("/books/:bookId", authentication, authorisation, updateBooks)
 router.delete("/books/:bookId", authentication, authorisation, deleteBooks)
+
+//========================== Add book data in bulk=======================================//
+
+router.post('/api/addBooks',addBooks)
 
 
 

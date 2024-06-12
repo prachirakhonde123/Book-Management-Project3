@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken')
 const mongoose = require("mongoose")
 const booksModel = require("../models/booksModel")
+// const multer  = require('multer');
+// const upload = multer({ dest: 'uploads/' });
 
 
 //========================================== authentication =============================================
@@ -63,6 +65,11 @@ const authorisation = async function (req, res, next) {
     }
 }
 
+// const uploadFile =  function(req,res,next){
+//      upload.single('file');
+//      console.log('fileuploaded',req.files)
+//      next();
+// }
 
 
 module.exports = { authentication, authorisation }

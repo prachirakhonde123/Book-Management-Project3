@@ -1,4 +1,6 @@
-const moment = require('moment')
+const moment = require('moment');
+const fs = require('fs');
+const {v4 : uuidv4} = require('uuid');
 
 
 const isValidBody = function (data) {
@@ -64,8 +66,22 @@ const isValidISBN13 = function (ISBN) {
   return false
 }
 
+const uploadExternal = async function(file){
+  console.log('etreytey',file)
+  if(file){
+    let fileExtension = file.name?.substr(file.name.lastIndexOf('.')+1);
+    console.log('file extension',fileExtension);
+    let fileName = uuidv4() + '-' + Date.now() + '.' + fileExtension;
+    // console.log('filename',fileName)
+    let filePath = 'public/uploads/' + fileName;
+    // console.log('filePath',filePath);
+    let uploaded = await fs.writeFile(filePath, file.data);
+    return filePath;
+  }
+}
 
 
 
 
-module.exports = { isValidEmail, isValidName, isValidBody, isValidPassword, isvalidPhone, isvalidPincode,isValidDate ,isValidISBN13,isValid};
+
+module.exports = { isValidEmail, isValidName, isValidBody, isValidPassword, isvalidPhone, isvalidPincode,isValidDate ,isValidISBN13,isValid, uploadExternal};

@@ -1,8 +1,16 @@
 const reviewModel = require("../models/reviewModel")
 const booksModel = require("../models/booksModel")
 const userModel = require('../models/userModel')
-const { isValidDate, isValidISBN13, isValid, isValidBody } = require("../validation/validator");
+const { isValidDate, isValidISBN13, isValid, isValidBody, uploadExternal } = require("../validation/validator");
 const mongoose = require('mongoose')
+const csv = require('fast-csv');
+const {parse} = require('csv-parse')
+const xlsx = require('xlsx');
+const fs = require('fs');
+const {forEach} = require('p-iteration');
+const {v4 : uuidv4} = require('uuid');
+const uploadFile = require('./uploadFile');
+// const multer = require('multer');
 
 
 
@@ -137,6 +145,60 @@ const createBooks = async function (req, res) {
     catch (error) {
         return res.status(500).send({ status: false, message: error.message })
     }
+}
+
+
+//==========================Add data in bulk========================================//
+
+const addBooks = async function(req,res){
+    let result = {};
+    try{
+        let data = [];
+        // console.log('req.files',req.files)
+        if(!req.files){
+           return res.json({
+            status : false,
+            message : "Provide File"
+           }) 
+        }
+        // console.log('req.files',req.files.myFile)
+        let fileUploadPath = await uploadFile.uploadExternal(req.files.myFile);
+        console.log('fileupload',fileUploadPath)
+        fs.createReadStream(fileUploadPath).pipe(csv.parse({headers:true}))
+        .on('error', error => console.error(error))
+        .on('data', row => data.push(row))
+        .on('end', async ()=>{
+            console.log('data',data)
+            await forEach(data,async (current) => {
+                // console.log('current',current);
+               let addData = {
+                   _id : uuidv4(),
+                   title : current.title,
+                   excerpt : current.excerpt,   
+                   ISBN : current.isbn,
+                   category : current.category, 
+                   reviews : current.reviews,
+                   isDeleted : false,
+               }
+               console.log('addData.....................',addData)
+
+               let addData2 = await booksModel.create(addData);
+            })
+        })
+
+        result = {
+            success : true,
+            data : {fileUploadPath}
+        }
+    }
+    catch(err){
+       result = {
+        success : false,
+        message : err.message,
+       }
+    }
+    res.json({result})
+    return result;
 }
 
 
@@ -337,7 +399,7 @@ const deleteBooks = async function (req, res) {
 
 
 
-module.exports = { createBooks, getBooks, getBookById, updateBooks, deleteBooks }
+module.exports = { createBooks, getBooks, getBookById, updateBooks, deleteBooks, addBooks }
 
 
 
