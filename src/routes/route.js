@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { createUser, userLogin } = require("../controllers/userController")
-const { createBooks, getBooks, getBookById, updateBooks, deleteBooks, addBooks } = require("../controllers/booksController")
-const { createReview,updateReview,deleteReview } = require('../controllers/reviewController')
+const { createBooks, getBooks, getBookById, updateBooks, deleteBooks, addBooks, updateBooksInBulk } = require("../controllers/booksController")
+const { createReview,updateReview,deleteReview, createReviewinBulk, fetchReview } = require('../controllers/reviewController')
 const { authentication, authorisation, uploadFile} = require("../middleware/auth");
 
 
@@ -21,14 +21,17 @@ router.delete("/books/:bookId", authentication, authorisation, deleteBooks)
 
 //========================== Add book data in bulk=======================================//
 
-router.post('/api/addBooks',addBooks)
+router.post('/api/addBooks',addBooks);
+router.post('/api/updateBooks',updateBooksInBulk);
 
 
 
 //================================= review apis =================================================
 router.post("/books/:bookId/review", createReview)
 router.put("/books/:bookId/review/:reviewId", updateReview)
-router.delete("/books/:bookId/review/:reviewId", deleteReview)
+router.delete("/books/:bookId/review/:reviewId", deleteReview);
+router.post('/api/add/reviewInBulk', createReviewinBulk);
+router.get('/api/fetchReview',fetchReview);
 
 
 

@@ -18,9 +18,6 @@ app.use(fileUpload({parseNested: true}));
 app.use('/static', express.static(path.join(__dirname, 'public')));
  
 
-
-
-
 mongoose.connect("mongodb+srv://PrachiRakhonde:TidE9uPBxvyZRFOn@cluster0.vdm2ccj.mongodb.net/bookmanagement?retryWrites=true&w=majority", {
     useNewUrlParser: true
 })

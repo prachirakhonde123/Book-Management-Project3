@@ -201,12 +201,54 @@ const addBooks = async function(req,res){
     return result;
 }
 
+//=======================Update Books in bulk=============================================//
 
+const updateBooksInBulk = async function (req,res,next){
+    try{
+        let data = [];
 
+        if(!req.files){
+            return res.json({
+                status : false,
+                message : "Please Provide File."
+            })
+        }
 
+        let fileUploadPath = await uploadFile.uploadExternal(req.files.bookFile);
 
+        fs.createReadStream(fileUploadPath)
+        .pipe(csv.parse({headers:true}))
+        .on('error', error => console.error(error))
+        .on('data',(row)=> data.push(row))
+        .on('end', async function(){
+            await forEach(data, async (current)=>{
+                let updateData = {
+                    _id : uuidv4(),
+                    title : current.title,
+                    excerpt : current.excerpt,
+                    ISBN : current.isbn,
+                    category : current.category,
+                    reviews : current.reviews,
+                    isDeleted : false
+                }
+                
+                let updateBook = await booksModel.findOneAndUpdate({title : current.title},{$set : updateData},{upsert:true});
+            })
+        })
 
+        return res.json({
+            status : true,
+            data : {fileUploadPath}
+        })
 
+    }
+    catch(err){
+       return res.json({
+         status : false,
+         error : err.message
+       })
+    }
+}
 
 //=================================== geting books data using query params ==================================
 
@@ -399,7 +441,7 @@ const deleteBooks = async function (req, res) {
 
 
 
-module.exports = { createBooks, getBooks, getBookById, updateBooks, deleteBooks, addBooks }
+module.exports = { createBooks, getBooks, getBookById, updateBooks, deleteBooks, addBooks, updateBooksInBulk }
 
 
 

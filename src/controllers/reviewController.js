@@ -2,6 +2,13 @@ const { default: mongoose } = require("mongoose")
 const booksModel = require("../models/booksModel")
 const reviewModel = require("../models/reviewModel")
 const { isValid } = require("../validation/validator")
+const uploadFile  = require("./uploadFile");
+const fs = require('fs');
+const csv = require('fast-csv');
+const {parse} = require('csv-parse');
+const {forEach} = require('p-iteration');
+const {v4 : uuidv4} = require('uuid');
+
 
 
 //------------------------------------- creating review --------------------------------------------------
@@ -248,10 +255,113 @@ const deleteReview = async function (req, res) {
     }
 }
 
+//=================Create review for particular books======================================//
+
+const createReviewinBulk = async function (req,res,next){
+    let result = {}
+    try {
+        let data = [];
+
+        if(!req.files){
+            return res.json({
+                status : false,
+                message : "Provide File"
+            })
+        }
+
+        let fileUploadPath = await uploadFile.uploadExternal(req.files.reviewFile);
+
+        fs.createReadStream(fileUploadPath)
+        .pipe(csv.parse({headers : true}))
+        .on('error',error=> console.error(error))
+        .on('data',row=> data.push(row))
+        .on('end', async ()=> {
+            await forEach(data, async (current)=>{
+                let findBook = await booksModel.findOne({title : current.bookName})
+                if(findBook){
+                    let reviewData = {
+                        _id : uuidv4(),
+                        bookId : findBook._id,
+                        reviewedBy : current?.reviewedBy ? current?.reviewedBy :  'Guest',
+                        rating : current?.rating,
+                        review : current?.review
+                    }
+                    let createReview = await reviewModel.create(reviewData);
+                }else{
+                    return res.json({
+                        status : false,
+                        message : "No book found."
+                    })
+                }
+            })
+        })
+
+        return res.json({
+            status : true,
+            data : {fileUploadPath}
+        })
+
+    }
+    catch(err){
+       return res.json({
+         status : false,
+         message : err.message
+       })
+    }
+}
+
+
+//================= Fetch Book and review data ===========================//
+
+const fetchReview = async function(req,res,next){
+    let result = {}
+    try{
+        let reviewData = await reviewModel.aggregate(
+            [
+                {
+                    $lookup : {
+                        from: "books",
+                        localField: "bookId",
+                        foreignField: "_id",
+                        as: "books"
+                      }
+                },
+                {
+                    $project : {
+                        review :1,
+                        reviewedBy:1,
+                        rating :1,
+                        "books.title" : 1,
+                        "books.excerpt" : 1,
+                        "books.ISBN" : 1,
+                        "books.category" : 1
+                      }
+                }
+            ]
+        )
+
+        // console.log('reviewData',reviewData)
+
+        result = {
+            status : true,
+            data : reviewData
+        }
+
+    }
+    catch(err){
+        result = {
+            status : false,
+            message : err.message
+        }
+    }
+
+    return res.json(result);
+}
 
 
 
 
 
 
-module.exports = { createReview, updateReview, deleteReview }
+
+module.exports = { createReview, updateReview, deleteReview, createReviewinBulk, fetchReview }
